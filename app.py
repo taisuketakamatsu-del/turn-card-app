@@ -347,6 +347,8 @@ if "input_footer_key" not in st.session_state:
     st.session_state["input_footer_key"] = PRESETS["不快スイッチ"]["footer"]
 if "input_font_size_key" not in st.session_state:
     st.session_state["input_font_size_key"] = 52
+if "input_show_number_key" not in st.session_state:
+    st.session_state["input_show_number_key"] = False
 
 def load_memory_callback(item):
     st.session_state["input_textarea_key"] = item["text"]
@@ -354,6 +356,8 @@ def load_memory_callback(item):
     st.session_state["input_footer_key"] = item["footer"]
     if "font_size" in item:
         st.session_state["input_font_size_key"] = item["font_size"]
+    if "show_number" in item:
+        st.session_state["input_show_number_key"] = item["show_number"]
 
 def delete_memory_callback(idx):
     memories = load_memories()
@@ -367,6 +371,7 @@ def on_preset_change():
     st.session_state["input_tag_key"] = PRESETS[selected]["tag"]
     st.session_state["input_footer_key"] = PRESETS[selected]["footer"]
     st.session_state["input_font_size_key"] = 52
+    st.session_state["input_show_number_key"] = False
 
 def auto_analyze_break_japanese(text):
     text = text.replace('<br>', '').strip()
@@ -471,7 +476,7 @@ def get_frame_image(uploaded_file):
 
     return create_fallback_frame()
 
-def generate_card_layers(card_lines, tag_title, footer_title, frame_img, font_size):
+def generate_card_layers(card_lines, tag_title, footer_title, frame_img, font_size, show_number):
     canvas_w, canvas_h = 2373, 3379
     x_coords = [158, 1233, 2307]
     y_coords = [128, 777, 1426, 2075, 2725, 3376]
@@ -482,6 +487,7 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, font_si
     font_tag = get_japanese_font(42)
     font_text = get_japanese_font(font_size)
     font_footer = get_japanese_font(30)
+    font_number = get_japanese_font(28)  # 通し番号用のフォント
 
     for i, text in enumerate(card_lines[:10]):
         col = i % 2
@@ -505,6 +511,10 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, font_si
         draw.text((cx, cy + 20), analyzed_text, fill=(26, 32, 44), font=font_text, anchor='mm', align='center', spacing=25)
         
         draw.text((box_x1 - 40, box_y1 - 40), footer_title, fill=(160, 174, 192), font=font_footer, anchor='rb')
+
+        # 通し番号の描画
+        if show_number:
+            draw.text((box_x0 + 40, box_y0 + 40), f"No.{i+1:02d}", fill=(160, 174, 192), font=font_number, anchor='lt')
 
     composite_layer = text_layer.copy()
     if frame_img is not None:
@@ -563,7 +573,7 @@ with left_col:
             label_visibility="collapsed"
         )
 
-        with st.expander("詳細設定（タグ・フッター・文字サイズ・枠画像）", expanded=False):
+        with st.expander("詳細設定（タグ・サイズ・通し番号・枠画像）", expanded=False):
             c1, c2 = st.columns(2)
             with c1:
                 st.text_input("タグ名", key="input_tag_key")
@@ -571,6 +581,9 @@ with left_col:
                 st.text_input("フッター表記", key="input_footer_key")
             
             st.slider("テキストの文字サイズ", min_value=30, max_value=80, value=52, step=2, key="input_font_size_key")
+            
+            # 通し番号のチェックボックスを追加
+            st.checkbox("通し番号（No.01, No.02...）をカード左上に表示する", key="input_show_number_key")
             
             uploaded_frame = st.file_uploader("枠画像の変更", type=["png", "jpg", "jpeg"])
 
@@ -590,7 +603,8 @@ with left_col:
                         "tag": st.session_state["input_tag_key"],
                         "footer": st.session_state["input_footer_key"],
                         "text": st.session_state["input_textarea_key"],
-                        "font_size": st.session_state["input_font_size_key"]
+                        "font_size": st.session_state["input_font_size_key"],
+                        "show_number": st.session_state["input_show_number_key"]
                     }
                     memories.insert(0, new_item)
                     save_memories(memories)
@@ -654,12 +668,14 @@ with left_col:
 
 card_lines = [line.strip() for line in st.session_state["input_textarea_key"].strip().split("\n") if line.strip()]
 frame_img_data = get_frame_image(uploaded_frame)
+
 text_only_img, frame_overlaid_img = generate_card_layers(
     card_lines, 
     st.session_state["input_tag_key"], 
     st.session_state["input_footer_key"], 
     frame_img_data,
-    st.session_state["input_font_size_key"]
+    st.session_state["input_font_size_key"],
+    st.session_state["input_show_number_key"]
 )
 
 with right_col:
