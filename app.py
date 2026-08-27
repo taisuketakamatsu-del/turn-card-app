@@ -49,9 +49,9 @@ html, body, [class*="css"] {
 }
 
 .main .block-container {
-    max-width: 1320px !important;
-    padding-left: 1.5rem !important;
-    padding-right: 1.5rem !important;
+    max-width: 1380px !important;
+    padding-left: 1.2rem !important;
+    padding-right: 1.2rem !important;
     margin: 0 auto !important;
 }
 
@@ -204,9 +204,9 @@ div[data-testid="stRadio"] label:has(input:checked) p {
     color: #0F172A !important;
 }
 
-/* プレビュー画像サイズ制限 */
+/* プレビュー画像サイズを85vhに拡大 */
 div[data-testid="stImage"] img {
-    max-height: 70vh !important;
+    max-height: 85vh !important;
     width: auto !important;
     object-fit: contain !important;
     border-radius: 10px !important;
@@ -232,14 +232,13 @@ div[data-testid="stImage"] img {
     margin-top: 2px !important;
 }
 
-/* iframe非表示用 */
 #print-iframe {
     display: none;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# 即時反映JavaScript（テキスト入力時のリアルタイムトリガー）
+# テキスト入力即時反映用JS
 components.html("""
 <script>
 (function(){
@@ -341,7 +340,6 @@ PRESETS = {
     }
 }
 
-# --- 初期化処理 ---
 if "input_textarea_key" not in st.session_state:
     st.session_state["input_textarea_key"] = PRESETS["不快スイッチ"]["text"]
 if "input_tag_key" not in st.session_state:
@@ -357,7 +355,6 @@ if "input_auto_break_key" not in st.session_state:
 if "input_use_custom_sizes" not in st.session_state:
     st.session_state["input_use_custom_sizes"] = False
 
-# カード個別のフォントサイズ初期化（10枚分）
 for idx in range(10):
     key_name = f"custom_font_size_{idx}"
     if key_name not in st.session_state:
@@ -434,13 +431,9 @@ def auto_analyze_break_japanese(text):
     return text[:mid] + "\n" + text[mid:]
 
 def process_card_text(text, enable_auto_break):
-    # <br> / <BR> タグを実際の改行文字 \n に変換
     text = text.replace("<br>", "\n").replace("<BR>", "\n").strip()
-    
-    # 手動での改行（\n）が無く、自動改行が有効な場合のみ自動解析を適用
     if enable_auto_break and "\n" not in text:
         return auto_analyze_break_japanese(text)
-    
     return text
 
 def get_japanese_font(size):
@@ -532,25 +525,20 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, default
         cx = (box_x0 + box_x1) / 2.0
         cy = (box_y0 + box_y1) / 2.0
         
-        # タグ背景・テキスト
         tag_w, tag_h = 320, 70
         tag_x0 = cx - tag_w / 2.0
         tag_y0 = box_y0 + 70
         draw.rounded_rectangle([tag_x0, tag_y0, tag_x0 + tag_w, tag_y0 + tag_h], radius=18, fill=(45, 55, 72))
         draw.text((cx, tag_y0 + tag_h/2.0), tag_title, fill=(255, 255, 255), font=font_tag, anchor='mm')
         
-        # 個別またはデフォルトの文字サイズを適用
         current_font_size = font_sizes_list[i] if font_sizes_list and i < len(font_sizes_list) else default_font_size
         font_text = get_japanese_font(current_font_size)
 
-        # テキストの改行処理
         processed_text = process_card_text(text, enable_auto_break)
         draw.text((cx, cy + 20), processed_text, fill=(26, 32, 44), font=font_text, anchor='mm', align='center', spacing=25)
         
-        # フッター表記
         draw.text((box_x1 - 40, box_y1 - 40), footer_title, fill=(160, 174, 192), font=font_footer, anchor='rb')
 
-        # 通し番号
         if show_number:
             draw.text((box_x0 + 40, box_y0 + 40), f"No.{i+1:02d}", fill=(160, 174, 192), font=font_number, anchor='lt')
 
@@ -593,10 +581,6 @@ left_col, right_col = st.columns([1, 1.25], gap="large")
 
 uploaded_frame = None
 
-# <br> ボタン挿入用アクション
-def add_br_tag():
-    st.session_state["input_textarea_key"] += "<br>"
-
 with left_col:
     st.markdown('<div class="app-title">TURN Training Card</div>', unsafe_allow_html=True)
     
@@ -614,13 +598,53 @@ with left_col:
 
         st.markdown('<div class="section-label">テキスト編集（10行）</div>', unsafe_allow_html=True)
         
-        # <br>挿入ボタンの配置
-        st.button("➕ 改行タグ `<br>` を末尾に追加", on_click=add_br_tag)
+        # カーソル位置へ <br> を直接挿入するJavaScriptボタン
+        components.html("""
+        <style>
+        .br-btn {
+            width: 100%;
+            height: 38px;
+            background-color: #0F172A;
+            color: #FFFFFF;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+            transition: all 0.2s ease;
+        }
+        .br-btn:hover {
+            background-color: #1E293B;
+        }
+        </style>
+        <button class="br-btn" onclick="insertBrAtCursor()">➕ カーソル位置に改行タグ &lt;br&gt; を挿入</button>
+        <script>
+        function insertBrAtCursor() {
+            const parentDoc = window.parent.document;
+            const textarea = parentDoc.querySelector('div[data-testid="stTextArea"] textarea');
+            if(!textarea) return;
 
+            const startPos = textarea.selectionStart;
+            const endPos = textarea.selectionEnd;
+            const originalValue = textarea.value;
+
+            textarea.value = originalValue.substring(0, startPos) + "<br>" + originalValue.substring(endPos);
+            textarea.selectionStart = startPos + 4;
+            textarea.selectionEnd = startPos + 4;
+            textarea.focus();
+
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            textarea.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        </script>
+        """, height=44)
+
+        # 高さを330pxに広げ、10行が完全に縦に収まるよう拡大
         st.text_area(
             "テキスト編集", 
             key="input_textarea_key", 
-            height=260, 
+            height=330, 
             label_visibility="collapsed"
         )
 
@@ -748,7 +772,6 @@ with left_col:
 card_lines = [line.strip() for line in st.session_state["input_textarea_key"].strip().split("\n") if line.strip()]
 frame_img_data = get_frame_image(uploaded_frame)
 
-# 個別フォントサイズリストの設定
 active_custom_sizes = None
 if st.session_state["input_use_custom_sizes"]:
     active_custom_sizes = [st.session_state[f"custom_font_size_{i}"] for i in range(10)]
