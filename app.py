@@ -14,9 +14,20 @@ from reportlab.lib.utils import ImageReader
 
 st.set_page_config(page_title="TURN Training Card", layout="wide")
 
+# フォントの確実な取得と配置
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FONT_PATH = os.path.join(BASE_DIR, "NotoSansJP-Bold.ttf")
+
+if not os.path.exists(FONT_PATH) or os.path.getsize(FONT_PATH) < 500000:
+    try:
+        font_url = "https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/static/NotoSansJP-Bold.ttf"
+        urllib.request.urlretrieve(font_url, FONT_PATH)
+    except Exception:
+        pass
+
 st.markdown("""
 <style>
-/* Streamlit標準ヘッダー・フッターの全削除 */
+/* ヘッダー・フッター非表示 */
 header[data-testid="stHeader"], 
 [data-testid="stHeader"], 
 [data-testid="stToolbar"], 
@@ -57,7 +68,6 @@ html, body, [class*="css"] {
     font-weight: 700 !important;
     color: #0F172A !important;
     margin-top: 0 !important;
-    padding-top: 0 !important;
     margin-bottom: 0.5rem !important;
 }
 
@@ -70,7 +80,7 @@ html, body, [class*="css"] {
     text-transform: uppercase;
 }
 
-/* タブリストの横幅をボタンぴったりに固定（右側の背景伸びを消去） */
+/* --- タブのホバー・非選択・選択中の文字色・背景色の固定 --- */
 div[data-baseweb="tab-list"] {
     background-color: #E2E8F0 !important;
     border-radius: 8px !important;
@@ -88,11 +98,23 @@ button[data-baseweb="tab"] {
     font-weight: 700 !important;
     padding: 6px 16px !important;
     background-color: transparent !important;
-    transition: all 0.15s ease !important;
 }
 
-button[data-baseweb="tab"] * {
+button[data-baseweb="tab"] p,
+button[data-baseweb="tab"] span,
+button[data-baseweb="tab"] div {
     color: #475569 !important;
+    font-weight: 700 !important;
+}
+
+button[data-baseweb="tab"]:hover {
+    background-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+button[data-baseweb="tab"]:hover p,
+button[data-baseweb="tab"]:hover span,
+button[data-baseweb="tab"]:hover div {
+    color: #0F172A !important;
 }
 
 button[data-baseweb="tab"][aria-selected="true"] {
@@ -100,8 +122,41 @@ button[data-baseweb="tab"][aria-selected="true"] {
     box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
 }
 
-button[data-baseweb="tab"][aria-selected="true"] * {
+button[data-baseweb="tab"][aria-selected="true"] p,
+button[data-baseweb="tab"][aria-selected="true"] span,
+button[data-baseweb="tab"][aria-selected="true"] div {
     color: #2563EB !important;
+    font-weight: 700 !important;
+}
+
+/* --- アコーディオン（詳細設定）のホバー制御 --- */
+div[data-testid="stExpander"] {
+    background-color: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 8px !important;
+    margin-top: 0.4rem !important;
+}
+
+div[data-testid="stExpander"] summary {
+    background-color: #FFFFFF !important;
+    border-radius: 8px !important;
+    color: #0F172A !important;
+}
+
+div[data-testid="stExpander"] summary:hover {
+    background-color: #F1F5F9 !important;
+    color: #0F172A !important;
+}
+
+div[data-testid="stExpander"] summary * {
+    color: #0F172A !important;
+    font-weight: 700 !important;
+}
+
+div[data-testid="stExpander"] label, .stTextInput label {
+    color: #334155 !important;
+    font-weight: 700 !important;
+    font-size: 0.8rem !important;
 }
 
 div[data-baseweb="select"] {
@@ -125,28 +180,6 @@ div[data-baseweb="select"] * {
     caret-color: #2563EB !important;
 }
 
-.stTextArea textarea:focus, .stTextInput input:focus {
-    border-color: #2563EB !important;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
-}
-
-.stTextArea textarea::selection, .stTextInput input::selection {
-    background-color: #2563EB !important;
-    color: #FFFFFF !important;
-}
-
-[data-testid="stExpander"] {
-    background-color: #FFFFFF !important;
-    border: 1px solid #CBD5E1 !important;
-    border-radius: 8px !important;
-    margin-top: 0.4rem !important;
-}
-
-[data-testid="stExpander"] summary * {
-    color: #0F172A !important;
-    font-weight: 600 !important;
-}
-
 div.stDownloadButton > button, div.stButton > button {
     height: 42px !important;
     background-color: #0F172A !important;
@@ -158,11 +191,11 @@ div.stDownloadButton > button, div.stButton > button {
     font-weight: 700 !important;
     width: 100% !important;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
-    transition: all 0.2s ease !important;
 }
 
 div.stDownloadButton > button:hover, div.stButton > button:hover {
     background-color: #1E293B !important;
+    color: #FFFFFF !important;
 }
 
 div[data-testid="stRadio"] > div {
@@ -185,7 +218,6 @@ div[data-testid="stRadio"] label {
     background: transparent !important;
     border-radius: 6px !important;
     cursor: pointer !important;
-    white-space: nowrap !important;
 }
 
 div[data-testid="stRadio"] label > div:first-child {
@@ -197,7 +229,6 @@ div[data-testid="stRadio"] label p {
     font-weight: 600 !important;
     color: #475569 !important;
     margin: 0 !important;
-    white-space: nowrap !important;
 }
 
 div[data-testid="stRadio"] label:has(input:checked) {
@@ -207,12 +238,6 @@ div[data-testid="stRadio"] label:has(input:checked) {
 
 div[data-testid="stRadio"] label:has(input:checked) p {
     color: #0F172A !important;
-}
-
-div[data-testid="stImage"] {
-    display: flex !important;
-    justify-content: center !important;
-    margin-top: 0.4rem !important;
 }
 
 div[data-testid="stImage"] img {
@@ -225,16 +250,25 @@ div[data-testid="stImage"] img {
 }
 
 .history-card {
-    background-color: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 8px;
-    padding: 0.8rem;
-    margin-bottom: 0.6rem;
+    background-color: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 8px !important;
+    padding: 0.8rem !important;
+    margin-bottom: 0.6rem !important;
+}
+.history-card-title {
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    color: #0F172A !important;
+}
+.history-card-date {
+    font-size: 0.75rem !important;
+    color: #64748B !important;
+    margin-top: 2px !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# 即時同期用JS
 components.html("""
 <script>
 (function(){
@@ -275,14 +309,6 @@ components.html("""
 })();
 </script>
 """, height=0, width=0)
-
-FONT_PATH = "NotoSansJP-Bold.ttf"
-if not os.path.exists(FONT_PATH) or os.path.getsize(FONT_PATH) < 1000000:
-    try:
-        font_url = "https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/static/NotoSansJP-Bold.ttf"
-        urllib.request.urlretrieve(font_url, FONT_PATH)
-    except Exception:
-        pass
 
 STORAGE_FILE = "saved_memories.json"
 
@@ -407,12 +433,16 @@ def auto_analyze_break_japanese(text):
     return text[:mid] + "\n" + text[mid:]
 
 def get_japanese_font(size):
+    if os.path.exists(FONT_PATH) and os.path.getsize(FONT_PATH) > 500000:
+        try:
+            return ImageFont.truetype(FONT_PATH, size)
+        except Exception:
+            pass
+
     candidates = [
         '/System/Library/Fonts/Supplemental/ヒラギノ角ゴ ProN W6.ttc',
-        '/System/Library/Fonts/Hiragino Sans GB.ttc',
-        FONT_PATH,
-        'C:/Windows/Fonts/meiryo.ttc',
-        '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc'
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc',
+        '/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc'
     ]
     for path in candidates:
         if os.path.exists(path) and os.path.getsize(path) > 10000:
@@ -588,8 +618,8 @@ with left_col:
             for idx, item in enumerate(memories):
                 st.markdown(f"""
                 <div class="history-card">
-                    <div style="font-weight: 700; font-size: 0.95rem; color: #0F172A;">{item['title']}</div>
-                    <div style="font-size: 0.75rem; color: #64748B; margin-top: 2px;">📅 保存日時: {item['date']}</div>
+                    <div class="history-card-title">{item['title']}</div>
+                    <div class="history-card-date">📅 保存日時: {item['date']}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
