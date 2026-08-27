@@ -122,7 +122,7 @@ div[data-testid="stExpander"] summary * {
     font-weight: 700 !important;
 }
 
-div[data-testid="stExpander"] label, .stTextInput label {
+div[data-testid="stExpander"] label, .stTextInput label, div[data-testid="stSlider"] label {
     color: #334155 !important;
     font-weight: 700 !important;
     font-size: 0.8rem !important;
@@ -345,11 +345,15 @@ if "input_tag_key" not in st.session_state:
     st.session_state["input_tag_key"] = PRESETS["不快スイッチ"]["tag"]
 if "input_footer_key" not in st.session_state:
     st.session_state["input_footer_key"] = PRESETS["不快スイッチ"]["footer"]
+if "input_font_size_key" not in st.session_state:
+    st.session_state["input_font_size_key"] = 52
 
 def load_memory_callback(item):
     st.session_state["input_textarea_key"] = item["text"]
     st.session_state["input_tag_key"] = item["tag"]
     st.session_state["input_footer_key"] = item["footer"]
+    if "font_size" in item:
+        st.session_state["input_font_size_key"] = item["font_size"]
 
 def delete_memory_callback(idx):
     memories = load_memories()
@@ -362,6 +366,7 @@ def on_preset_change():
     st.session_state["input_textarea_key"] = PRESETS[selected]["text"]
     st.session_state["input_tag_key"] = PRESETS[selected]["tag"]
     st.session_state["input_footer_key"] = PRESETS[selected]["footer"]
+    st.session_state["input_font_size_key"] = 52
 
 def auto_analyze_break_japanese(text):
     text = text.replace('<br>', '').strip()
@@ -466,7 +471,7 @@ def get_frame_image(uploaded_file):
 
     return create_fallback_frame()
 
-def generate_card_layers(card_lines, tag_title, footer_title, frame_img):
+def generate_card_layers(card_lines, tag_title, footer_title, frame_img, font_size):
     canvas_w, canvas_h = 2373, 3379
     x_coords = [158, 1233, 2307]
     y_coords = [128, 777, 1426, 2075, 2725, 3376]
@@ -475,7 +480,7 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img):
     draw = ImageDraw.Draw(text_layer)
 
     font_tag = get_japanese_font(42)
-    font_text = get_japanese_font(52)
+    font_text = get_japanese_font(font_size)
     font_footer = get_japanese_font(30)
 
     for i, text in enumerate(card_lines[:10]):
@@ -558,12 +563,14 @@ with left_col:
             label_visibility="collapsed"
         )
 
-        with st.expander("詳細設定（タグ・フッター・枠画像）", expanded=False):
+        with st.expander("詳細設定（タグ・フッター・文字サイズ・枠画像）", expanded=False):
             c1, c2 = st.columns(2)
             with c1:
                 st.text_input("タグ名", key="input_tag_key")
             with c2:
                 st.text_input("フッター表記", key="input_footer_key")
+            
+            st.slider("テキストの文字サイズ", min_value=30, max_value=80, value=52, step=2, key="input_font_size_key")
             
             uploaded_frame = st.file_uploader("枠画像の変更", type=["png", "jpg", "jpeg"])
 
@@ -582,7 +589,8 @@ with left_col:
                         "date": now_str,
                         "tag": st.session_state["input_tag_key"],
                         "footer": st.session_state["input_footer_key"],
-                        "text": st.session_state["input_textarea_key"]
+                        "text": st.session_state["input_textarea_key"],
+                        "font_size": st.session_state["input_font_size_key"]
                     }
                     memories.insert(0, new_item)
                     save_memories(memories)
@@ -627,7 +635,8 @@ text_only_img, frame_overlaid_img = generate_card_layers(
     card_lines, 
     st.session_state["input_tag_key"], 
     st.session_state["input_footer_key"], 
-    frame_img_data
+    frame_img_data,
+    st.session_state["input_font_size_key"]
 )
 
 with right_col:
