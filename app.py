@@ -105,27 +105,35 @@ div[data-baseweb="tab-list"] button {
     border-radius: 4px !important;
 }
 
-/* 詳細設定（stExpander） */
+/* 詳細設定（stExpander）の色バグを完全解消 */
 div[data-testid="stExpander"] {
     background-color: #FFFFFF !important;
-    border: 1px solid #E2E8F0 !important;
+    border: 1px solid #CBD5E1 !important;
     border-radius: 6px !important;
     margin-top: 0.5rem !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+    overflow: hidden !important;
 }
 
 div[data-testid="stExpander"] summary {
-    padding: 0.4rem 0.8rem !important;
+    background-color: #FFFFFF !important;
+    padding: 0.5rem 0.8rem !important;
+    border-radius: 6px !important;
+}
+
+div[data-testid="stExpander"] summary:hover {
+    background-color: #F1F5F9 !important;
 }
 
 div[data-testid="stExpander"] summary * {
-    color: #334155 !important;
-    font-size: 0.8rem !important;
-    font-weight: 600 !important;
+    color: #0F172A !important;
+    -webkit-text-fill-color: #0F172A !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
 }
 
 div[data-testid="stExpander"] label, .stTextInput label, div[data-testid="stSlider"] label, div[data-testid="stCheckbox"] label * {
-    color: #475569 !important;
+    color: #334155 !important;
     font-weight: 600 !important;
     font-size: 0.75rem !important;
 }
@@ -200,14 +208,14 @@ div[data-testid="stRadio"] label:has(input:checked) p {
     color: #0F172A !important;
 }
 
-/* ★ 右カラム追従固定 (Sticky) 設定 */
+/* 右カラム追従固定 (Sticky) 設定 */
 div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(2) {
     position: sticky !important;
     top: 0.8rem !important;
     align-self: flex-start !important;
 }
 
-/* ★ プレビュー画像をほんの少し拡大（82vh） */
+/* プレビュー画像表示 */
 div[data-testid="stImage"] img {
     max-height: 82vh !important;
     width: auto !important;
@@ -338,6 +346,9 @@ PRESETS = {
     }
 }
 
+# 初期文字サイズを [60] に設定
+DEFAULT_FONT_SIZE = 60
+
 if "input_textarea_key" not in st.session_state:
     st.session_state["input_textarea_key"] = PRESETS["不快スイッチ"]["text"]
 if "input_tag_key" not in st.session_state:
@@ -345,7 +356,7 @@ if "input_tag_key" not in st.session_state:
 if "input_footer_key" not in st.session_state:
     st.session_state["input_footer_key"] = PRESETS["不快スイッチ"]["footer"]
 if "input_font_size_key" not in st.session_state:
-    st.session_state["input_font_size_key"] = 52
+    st.session_state["input_font_size_key"] = DEFAULT_FONT_SIZE
 if "input_show_number_key" not in st.session_state:
     st.session_state["input_show_number_key"] = False
 if "input_auto_break_key" not in st.session_state:
@@ -356,18 +367,16 @@ if "input_use_custom_sizes" not in st.session_state:
 for idx in range(10):
     key_name = f"custom_font_size_{idx}"
     if key_name not in st.session_state:
-        st.session_state[key_name] = 52
+        st.session_state[key_name] = DEFAULT_FONT_SIZE
 
 def load_memory_callback(item):
     st.session_state["input_textarea_key"] = item["text"]
     st.session_state["input_tag_key"] = item["tag"]
     st.session_state["input_footer_key"] = item["footer"]
-    if "font_size" in item:
-        st.session_state["input_font_size_key"] = item["font_size"]
-    if "show_number" in item:
-        st.session_state["input_show_number_key"] = item["show_number"]
-    if "auto_break" in item:
-        st.session_state["input_auto_break_key"] = item["auto_break"]
+    st.session_state["input_font_size_key"] = item.get("font_size", DEFAULT_FONT_SIZE)
+    st.session_state["input_show_number_key"] = item.get("show_number", False)
+    st.session_state["input_auto_break_key"] = item.get("auto_break", True)
+    
     if "custom_sizes" in item and isinstance(item["custom_sizes"], list):
         st.session_state["input_use_custom_sizes"] = True
         for idx, s in enumerate(item["custom_sizes"][:10]):
@@ -386,10 +395,12 @@ def on_preset_change():
     st.session_state["input_textarea_key"] = PRESETS[selected]["text"]
     st.session_state["input_tag_key"] = PRESETS[selected]["tag"]
     st.session_state["input_footer_key"] = PRESETS[selected]["footer"]
-    st.session_state["input_font_size_key"] = 52
+    st.session_state["input_font_size_key"] = DEFAULT_FONT_SIZE
     st.session_state["input_show_number_key"] = False
     st.session_state["input_auto_break_key"] = True
     st.session_state["input_use_custom_sizes"] = False
+    for idx in range(10):
+        st.session_state[f"custom_font_size_{idx}"] = DEFAULT_FONT_SIZE
 
 def auto_analyze_break_japanese(text):
     if '\n' in text or len(text) <= 10:
@@ -429,7 +440,8 @@ def auto_analyze_break_japanese(text):
     return text[:mid] + "\n" + text[mid:]
 
 def process_card_text(text, enable_auto_break):
-    text = text.replace("<br>", "\n").replace("<BR>", "\n").strip()
+    # <改行>、(改行)、<br>、<BR> のどれが入っていても実際の改行（\n）に変換
+    text = text.replace("<改行>", "\n").replace("(改行)", "\n").replace("<br>", "\n").replace("<BR>", "\n").strip()
     if enable_auto_break and "\n" not in text:
         return auto_analyze_break_japanese(text)
     return text
@@ -594,6 +606,7 @@ with left_col:
             label_visibility="collapsed"
         )
 
+        # 直感的な <改行> タグをカーソル位置に挿入するボタン
         components.html("""
         <style>
         .br-btn {
@@ -613,7 +626,7 @@ with left_col:
             background-color: #1E293B;
         }
         </style>
-        <button class="br-btn" onclick="insertBrAtCursor()">↵ カーソル位置に改行 (&lt;br&gt;) を挿入</button>
+        <button class="br-btn" onclick="insertBrAtCursor()">↵ カーソル位置に &lt;改行&gt; を挿入</button>
         <script>
         function insertBrAtCursor() {
             const parentDoc = window.parent.document;
@@ -622,12 +635,12 @@ with left_col:
 
             textarea.focus();
             if (parentDoc.queryCommandSupported && parentDoc.queryCommandSupported('insertText')) {
-                parentDoc.execCommand('insertText', false, '<br>');
+                parentDoc.execCommand('insertText', false, '<改行>');
             } else {
                 const startPos = textarea.selectionStart;
                 const endPos = textarea.selectionEnd;
                 const val = textarea.value;
-                textarea.value = val.substring(0, startPos) + "<br>" + val.substring(endPos);
+                textarea.value = val.substring(0, startPos) + "<改行>" + val.substring(endPos);
                 textarea.selectionStart = textarea.selectionEnd = startPos + 4;
             }
             
@@ -675,9 +688,9 @@ with left_col:
                 ]
                 for idx in range(10):
                     with all_cols[idx]:
-                        st.slider(f"No.{idx+1:02d} サイズ", min_value=30, max_value=80, step=2, key=f"custom_font_size_{idx}")
+                        st.slider(f"No.{idx+1:02d} サイズ", min_value=30, max_value=80, value=60, step=2, key=f"custom_font_size_{idx}")
             else:
-                st.slider("全体の文字サイズ", min_value=30, max_value=80, step=2, key="input_font_size_key")
+                st.slider("全体の文字サイズ", min_value=30, max_value=80, value=60, step=2, key="input_font_size_key")
             
             uploaded_frame = st.file_uploader("枠画像の変更", type=["png", "jpg", "jpeg"])
 
@@ -858,4 +871,3 @@ with left_col:
         </script>
         """
         components.html(print_html, height=40)
-        
