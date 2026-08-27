@@ -1,6 +1,7 @@
 import os
 import io
 import json
+import base64
 import datetime
 import unicodedata
 import urllib.request
@@ -229,6 +230,15 @@ div[data-testid="stImage"] img {
     color: #64748B !important;
     margin-top: 2px !important;
 }
+
+/* 印刷用iframeを見えなくする */
+#print-iframe {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: none;
+    visibility: hidden;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -442,7 +452,6 @@ def get_frame_image(uploaded_file):
         except Exception:
             pass
 
-    # 10面枠画像の優先自動取得
     for filename in os.listdir('.'):
         normalized = unicodedata.normalize('NFC', filename)
         if (filename.endswith(('.png', '.jpg', '.jpeg'))) and not filename.startswith('.'):
@@ -452,7 +461,6 @@ def get_frame_image(uploaded_file):
                 except Exception:
                     pass
 
-    # ディレクトリ内にある任意の画像ファイルをフォールバック読み込み
     for filename in os.listdir('.'):
         if filename.endswith(('.png', '.jpg', '.jpeg')) and not filename.startswith('.'):
             try:
@@ -638,10 +646,54 @@ with right_col:
     st.image(display_img)
 
 with left_col:
+    st.markdown("<br>", unsafe_allow_html=True)
     pdf_data = convert_to_pdf_bytes(display_img)
-    st.download_button(
-        label="PDFを保存する",
-        data=pdf_data,
-        file_name="card_print_final.pdf",
-        mime="application/pdf"
-    )
+    b64_pdf = base64.b64encode(pdf_data).decode('utf-8')
+    
+    # 印刷ボタンとPDF保存ボタンを横並びに配置
+    btn_col1, btn_col2 = st.columns([1, 1])
+    
+    with btn_col1:
+        st.download_button(
+            label="💾 PDFを保存する",
+            data=pdf_data,
+            file_name="card_print_final.pdf",
+            mime="application/pdf"
+        )
+        
+    with btn_col2:
+        # ダイレクトプリント用スクリプトの埋め込み
+        print_html = f"""
+        <style>
+        .print-btn {{
+            width: 100%;
+            height: 42px;
+            background-color: #2563EB;
+            color: #FFFFFF;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+            transition: all 0.2s ease;
+        }}
+        .print-btn:hover {{
+            background-color: #1D4ED8;
+        }}
+        </style>
+        <button class="print-btn" onclick="printPDF()">🖨️ そのまま印刷する</button>
+        <script>
+        function printPDF() {{
+            const pdfData = "data:application/pdf;base64,{b64_pdf}";
+            const printWindow = window.open("");
+            printWindow.document.write(`
+                <html><head><title>Print Card</title></head>
+                <body style="margin:0;padding:0;overflow:hidden;">
+                    <iframe src="${{pdfData}}" style="width:100%;height:100%;border:none;" onload="setTimeout(function(){{window.print();}}, 500);"></iframe>
+                </body></html>
+            `);
+        }}
+        </script>
+        """
+        components.html(print_html, height=50)
