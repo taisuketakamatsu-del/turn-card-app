@@ -48,13 +48,13 @@ html, body, [class*="css"] {
 }
 
 .main .block-container {
-    max-width: 1280px !important;
+    max-width: 1320px !important;
     padding-left: 1.5rem !important;
     padding-right: 1.5rem !important;
     margin: 0 auto !important;
 }
 
-/* タイトル・ラベルのスタイリッシュ化 */
+/* タイトル・ラベル */
 .app-title {
     font-size: 1.1rem !important;
     font-weight: 700 !important;
@@ -72,7 +72,7 @@ html, body, [class*="css"] {
     text-transform: uppercase;
 }
 
-/* タブのデザイン整理（サイズ縮小） */
+/* タブのデザイン整理 */
 button[data-baseweb="tab"] *, 
 div[data-baseweb="tab-list"] button *,
 [data-testid="stTab"] * {
@@ -200,9 +200,16 @@ div[data-testid="stRadio"] label:has(input:checked) p {
     color: #0F172A !important;
 }
 
-/* 右側画像の絶妙なフィッティング（上下余白の自然化） */
+/* ★ 右カラム追従固定 (Sticky) 設定 */
+div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-child(2) {
+    position: sticky !important;
+    top: 0.8rem !important;
+    align-self: flex-start !important;
+}
+
+/* ★ プレビュー画像をほんの少し拡大（82vh） */
 div[data-testid="stImage"] img {
-    max-height: 76vh !important;
+    max-height: 82vh !important;
     width: auto !important;
     object-fit: contain !important;
     border-radius: 8px !important;
@@ -255,11 +262,11 @@ components.html("""
     timer = setTimeout(function() {
       if(!isComposing) {
         const ev = new KeyboardEvent('keydown', {
-          key: 'Enter', code: 'Enter', keyCode: 13, which: 13, ctrlKey: true, bubbles: true, cancelable: true
+          key: 'Enter', code: 'Enter', keyCode: 13, which: 13, ctrlKey: true, metaKey: true, bubbles: true, cancelable: true
         });
         target.dispatchEvent(ev);
       }
-    }, 200);
+    }, 300);
   }
 
   parentDoc.addEventListener('input', function(e) {
@@ -587,7 +594,6 @@ with left_col:
             label_visibility="collapsed"
         )
 
-        # 確実にカーソル位置（または選択範囲）へ <br> を挿入する信頼性の高いJavaScript
         components.html("""
         <style>
         .br-btn {
@@ -623,13 +629,16 @@ with left_col:
                 const val = textarea.value;
                 textarea.value = val.substring(0, startPos) + "<br>" + val.substring(endPos);
                 textarea.selectionStart = textarea.selectionEnd = startPos + 4;
-                textarea.dispatchEvent(new Event('input', { bubbles: true }));
             }
+            
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            textarea.dispatchEvent(new KeyboardEvent('keydown', {
+                key: 'Enter', code: 'Enter', keyCode: 13, which: 13, ctrlKey: true, metaKey: true, bubbles: true, cancelable: true
+            }));
         }
         </script>
         """, height=36)
 
-        # 高さをコンパクトにしつつ10行が収まる絶妙な260pxに設定
         st.text_area(
             "テキスト編集", 
             key="input_textarea_key", 
