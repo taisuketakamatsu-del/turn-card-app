@@ -347,7 +347,7 @@ if "input_tag_key" not in st.session_state:
 if "input_footer_key" not in st.session_state:
     st.session_state["input_footer_key"] = PRESETS["不快スイッチ"]["footer"]
 if "input_font_size_key" not in st.session_state:
-    st.session_state["input_font_size_key"] = 52  # 初期値を設定
+    st.session_state["input_font_size_key"] = 52
 if "input_show_number_key" not in st.session_state:
     st.session_state["input_show_number_key"] = False
 
@@ -513,7 +513,6 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, font_si
         
         draw.text((box_x1 - 40, box_y1 - 40), footer_title, fill=(160, 174, 192), font=font_footer, anchor='rb')
 
-        # 通し番号の描画
         if show_number:
             draw.text((box_x0 + 40, box_y0 + 40), f"No.{i+1:02d}", fill=(160, 174, 192), font=font_number, anchor='lt')
 
@@ -538,12 +537,19 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, font_si
 
     return text_layer, composite_layer
 
+# --- エラーを防ぐ軽量化PDFエンコード ---
 def convert_to_pdf_bytes(pil_img):
     pdf_buffer = io.BytesIO()
     c = canvas.Canvas(pdf_buffer, pagesize=A4)
     page_w, page_h = A4
+    
+    # RGBAからRGBに変換後、JPEG圧縮をかけてデータサイズを大幅に削減（クラッシュ防止）
     rgb_img = pil_img.convert('RGB')
-    c.drawImage(ImageReader(rgb_img), 0, 0, width=page_w, height=page_h)
+    img_buffer = io.BytesIO()
+    rgb_img.save(img_buffer, format="JPEG", quality=85)
+    img_buffer.seek(0)
+    
+    c.drawImage(ImageReader(img_buffer), 0, 0, width=page_w, height=page_h)
     c.save()
     return pdf_buffer.getvalue()
 
@@ -581,7 +587,6 @@ with left_col:
             with c2:
                 st.text_input("フッター表記", key="input_footer_key")
             
-            # 修正ポイント: valueの指定を外し、session_stateの初期値を使用させる
             st.slider("テキストの文字サイズ", min_value=30, max_value=80, step=2, key="input_font_size_key")
             
             st.checkbox("通し番号（No.01, No.02...）をカード左上に表示する", key="input_show_number_key")
@@ -695,7 +700,6 @@ with left_col:
     pdf_data = convert_to_pdf_bytes(display_img)
     b64_pdf = base64.b64encode(pdf_data).decode('utf-8')
     
-    # 印刷ボタンとPDF保存ボタンを横並びに配置
     btn_col1, btn_col2 = st.columns([1, 1])
     
     with btn_col1:
@@ -707,7 +711,6 @@ with left_col:
         )
         
     with btn_col2:
-        # 新しいタブでPDFを表示して印刷するスクリプト
         print_html = f"""
         <style>
         .print-btn {{
