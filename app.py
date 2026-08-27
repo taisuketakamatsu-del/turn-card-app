@@ -600,7 +600,30 @@ with left_col:
 
     with tab_memory:
         memories = load_memories()
-        st.markdown('<div class="section-label">保存された記憶一覧</div>', unsafe_allow_html=True)
+        
+        with st.expander("⚙️ 記憶データのバックアップと復元", expanded=False):
+            st.markdown("<p style='font-size:0.8rem; color:#64748B;'>※サーバーの仕様でデータがリセットされる場合があります。定期的なバックアップを推奨します。</p>", unsafe_allow_html=True)
+            b1, b2 = st.columns(2)
+            with b1:
+                json_string = json.dumps(memories, ensure_ascii=False, indent=2)
+                st.download_button(
+                    label="📥 バックアップを保存",
+                    data=json_string,
+                    file_name="turn_card_backup.json",
+                    mime="application/json"
+                )
+            with b2:
+                uploaded_backup = st.file_uploader("復元ファイルを選択", type=["json"], label_visibility="collapsed")
+                if uploaded_backup is not None:
+                    try:
+                        restored_memories = json.load(uploaded_backup)
+                        if isinstance(restored_memories, list):
+                            save_memories(restored_memories)
+                            st.success("記憶データを復元しました！画面を更新してください。")
+                    except Exception:
+                        st.error("正しいバックアップファイルではありません。")
+
+        st.markdown('<div class="section-label" style="margin-top: 1rem;">保存された記憶一覧</div>', unsafe_allow_html=True)
         
         if not memories:
             st.info("保存された記憶はまだありません。編集タブから保存してください。")
@@ -691,7 +714,6 @@ with left_col:
         <script>
         function openAndPrintPDF() {{
             const pdfDataUrl = "data:application/pdf;base64,{b64_pdf}";
-            // 新しいタブでPDFを開く
             const newWindow = window.open();
             newWindow.document.write(`
                 <html>
@@ -708,7 +730,6 @@ with left_col:
                 </html>
             `);
             newWindow.document.close();
-            // 自動的に印刷ダイアログを呼び出す（少し待つ）
             setTimeout(() => {{
                 newWindow.print();
             }}, 1000);
