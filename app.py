@@ -69,7 +69,27 @@ html, body, [class*="css"] {
     text-transform: uppercase;
 }
 
-/* --- タブ文字色・背景色の完全固定（透明化防止） --- */
+/* --- タブ文字可視化（Webkit上書きによる完全固定） --- */
+button[data-baseweb="tab"] *, 
+div[data-baseweb="tab-list"] button *,
+[data-testid="stTab"] * {
+    color: #475569 !important;
+    -webkit-text-fill-color: #475569 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    font-weight: 700 !important;
+}
+
+button[data-baseweb="tab"][aria-selected="true"] *, 
+div[data-baseweb="tab-list"] button[aria-selected="true"] *,
+[data-testid="stTab"][aria-selected="true"] * {
+    color: #2563EB !important;
+    -webkit-text-fill-color: #2563EB !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    font-weight: 700 !important;
+}
+
 div[data-baseweb="tab-list"] {
     background-color: #E2E8F0 !important;
     border-radius: 8px !important;
@@ -78,38 +98,6 @@ div[data-baseweb="tab-list"] {
     margin-bottom: 0.8rem !important;
     width: fit-content !important;
     display: inline-flex !important;
-}
-
-div[data-baseweb="tab-list"] button {
-    border-radius: 6px !important;
-    border: none !important;
-    font-size: 0.85rem !important;
-    font-weight: 700 !important;
-    padding: 6px 16px !important;
-    background-color: transparent !important;
-}
-
-/* 未選択タブの文字色（濃いグレーで強制表示） */
-div[data-baseweb="tab-list"] button * {
-    color: #475569 !important;
-    fill: #475569 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    font-weight: 700 !important;
-}
-
-/* 選択中タブの文字色（鮮やかな青） */
-div[data-baseweb="tab-list"] button[aria-selected="true"] {
-    background-color: #FFFFFF !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
-}
-
-div[data-baseweb="tab-list"] button[aria-selected="true"] * {
-    color: #2563EB !important;
-    fill: #2563EB !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    font-weight: 700 !important;
 }
 
 /* 詳細設定（stExpander） */
@@ -405,27 +393,13 @@ def auto_analyze_break_japanese(text):
     mid = len(text) // 2
     return text[:mid] + "\n" + text[mid:]
 
-@st.cache_data
-def fetch_japanese_font_bytes():
-    url = "https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/static/NotoSansJP-Bold.ttf"
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req) as response:
-            return response.read()
-    except Exception:
-        return None
-
 def get_japanese_font(size):
-    font_bytes = fetch_japanese_font_bytes()
-    if font_bytes:
-        try:
-            return ImageFont.truetype(io.BytesIO(font_bytes), size)
-        except Exception:
-            pass
-
+    # Linux (packages.txtでインストールされるNotoフォント) を優先的に探索
     candidates = [
         '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc',
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
         '/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc',
+        '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
         '/System/Library/Fonts/Supplemental/ヒラギノ角ゴ ProN W6.ttc'
     ]
     for path in candidates:
@@ -434,6 +408,16 @@ def get_japanese_font(size):
                 return ImageFont.truetype(path, size)
             except Exception:
                 continue
+
+    # フォントファイルが存在しない場合のフォールバックダウンロード
+    try:
+        url = "https://github.com/google/fonts/raw/main/ofl/notosansjp/static/NotoSansJP-Bold.ttf"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            return ImageFont.truetype(io.BytesIO(response.read()), size)
+    except Exception:
+        pass
+
     return ImageFont.load_default()
 
 def create_fallback_frame():
