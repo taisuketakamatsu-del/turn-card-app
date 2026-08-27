@@ -14,6 +14,8 @@ from reportlab.lib.utils import ImageReader
 
 st.set_page_config(page_title="TURN Training Card", layout="wide")
 
+FONT_PATH = "NotoSansJP-Bold.ttf"
+
 st.markdown("""
 <style>
 /* ヘッダー・フッター非表示 */
@@ -69,7 +71,7 @@ html, body, [class*="css"] {
     text-transform: uppercase;
 }
 
-/* --- タブ文字可視化（Webkit上書きによる完全固定） --- */
+/* タブ文字可視化 */
 button[data-baseweb="tab"] *, 
 div[data-baseweb="tab-list"] button *,
 [data-testid="stTab"] * {
@@ -394,7 +396,6 @@ def auto_analyze_break_japanese(text):
     return text[:mid] + "\n" + text[mid:]
 
 def get_japanese_font(size):
-    # Linux (packages.txtでインストールされるNotoフォント) を優先的に探索
     candidates = [
         '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc',
         '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
@@ -409,7 +410,6 @@ def get_japanese_font(size):
             except Exception:
                 continue
 
-    # フォントファイルが存在しない場合のフォールバックダウンロード
     try:
         url = "https://github.com/google/fonts/raw/main/ofl/notosansjp/static/NotoSansJP-Bold.ttf"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -442,9 +442,19 @@ def get_frame_image(uploaded_file):
         except Exception:
             pass
 
+    # 10面枠画像の優先自動取得
     for filename in os.listdir('.'):
         normalized = unicodedata.normalize('NFC', filename)
-        if ("カード" in normalized or "本家" in normalized or "input_file" in normalized) and normalized.endswith(('.png', '.jpg', '.jpeg')):
+        if (filename.endswith(('.png', '.jpg', '.jpeg'))) and not filename.startswith('.'):
+            if any(k in normalized for k in ["カード", "本家", "0テレ", "HR", "frame", "input"]):
+                try:
+                    return Image.open(filename).convert('RGBA')
+                except Exception:
+                    pass
+
+    # ディレクトリ内にある任意の画像ファイルをフォールバック読み込み
+    for filename in os.listdir('.'):
+        if filename.endswith(('.png', '.jpg', '.jpeg')) and not filename.startswith('.'):
             try:
                 return Image.open(filename).convert('RGBA')
             except Exception:
