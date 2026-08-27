@@ -14,17 +14,6 @@ from reportlab.lib.utils import ImageReader
 
 st.set_page_config(page_title="TURN Training Card", layout="wide")
 
-# フォントの確実な取得と配置
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FONT_PATH = os.path.join(BASE_DIR, "NotoSansJP-Bold.ttf")
-
-if not os.path.exists(FONT_PATH) or os.path.getsize(FONT_PATH) < 500000:
-    try:
-        font_url = "https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/static/NotoSansJP-Bold.ttf"
-        urllib.request.urlretrieve(font_url, FONT_PATH)
-    except Exception:
-        pass
-
 st.markdown("""
 <style>
 /* ヘッダー・フッター非表示 */
@@ -80,7 +69,7 @@ html, body, [class*="css"] {
     text-transform: uppercase;
 }
 
-/* --- タブのホバー・非選択・選択中の文字色・背景色の固定 --- */
+/* --- タブ文字色・背景色の完全固定（透明化防止） --- */
 div[data-baseweb="tab-list"] {
     background-color: #E2E8F0 !important;
     border-radius: 8px !important;
@@ -91,7 +80,7 @@ div[data-baseweb="tab-list"] {
     display: inline-flex !important;
 }
 
-button[data-baseweb="tab"] {
+div[data-baseweb="tab-list"] button {
     border-radius: 6px !important;
     border: none !important;
     font-size: 0.85rem !important;
@@ -100,36 +89,30 @@ button[data-baseweb="tab"] {
     background-color: transparent !important;
 }
 
-button[data-baseweb="tab"] p,
-button[data-baseweb="tab"] span,
-button[data-baseweb="tab"] div {
+/* 未選択タブの文字色（濃いグレーで強制表示） */
+div[data-baseweb="tab-list"] button * {
     color: #475569 !important;
+    fill: #475569 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
     font-weight: 700 !important;
 }
 
-button[data-baseweb="tab"]:hover {
-    background-color: rgba(255, 255, 255, 0.5) !important;
-}
-
-button[data-baseweb="tab"]:hover p,
-button[data-baseweb="tab"]:hover span,
-button[data-baseweb="tab"]:hover div {
-    color: #0F172A !important;
-}
-
-button[data-baseweb="tab"][aria-selected="true"] {
+/* 選択中タブの文字色（鮮やかな青） */
+div[data-baseweb="tab-list"] button[aria-selected="true"] {
     background-color: #FFFFFF !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
 }
 
-button[data-baseweb="tab"][aria-selected="true"] p,
-button[data-baseweb="tab"][aria-selected="true"] span,
-button[data-baseweb="tab"][aria-selected="true"] div {
+div[data-baseweb="tab-list"] button[aria-selected="true"] * {
     color: #2563EB !important;
+    fill: #2563EB !important;
+    opacity: 1 !important;
+    visibility: visible !important;
     font-weight: 700 !important;
 }
 
-/* --- アコーディオン（詳細設定）のホバー制御 --- */
+/* 詳細設定（stExpander） */
 div[data-testid="stExpander"] {
     background-color: #FFFFFF !important;
     border: 1px solid #CBD5E1 !important;
@@ -140,11 +123,6 @@ div[data-testid="stExpander"] {
 div[data-testid="stExpander"] summary {
     background-color: #FFFFFF !important;
     border-radius: 8px !important;
-    color: #0F172A !important;
-}
-
-div[data-testid="stExpander"] summary:hover {
-    background-color: #F1F5F9 !important;
     color: #0F172A !important;
 }
 
@@ -191,11 +169,6 @@ div.stDownloadButton > button, div.stButton > button {
     font-weight: 700 !important;
     width: 100% !important;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
-}
-
-div.stDownloadButton > button:hover, div.stButton > button:hover {
-    background-color: #1E293B !important;
-    color: #FFFFFF !important;
 }
 
 div[data-testid="stRadio"] > div {
@@ -432,20 +405,31 @@ def auto_analyze_break_japanese(text):
     mid = len(text) // 2
     return text[:mid] + "\n" + text[mid:]
 
+@st.cache_data
+def fetch_japanese_font_bytes():
+    url = "https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/static/NotoSansJP-Bold.ttf"
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            return response.read()
+    except Exception:
+        return None
+
 def get_japanese_font(size):
-    if os.path.exists(FONT_PATH) and os.path.getsize(FONT_PATH) > 500000:
+    font_bytes = fetch_japanese_font_bytes()
+    if font_bytes:
         try:
-            return ImageFont.truetype(FONT_PATH, size)
+            return ImageFont.truetype(io.BytesIO(font_bytes), size)
         except Exception:
             pass
 
     candidates = [
-        '/System/Library/Fonts/Supplemental/ヒラギノ角ゴ ProN W6.ttc',
         '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc',
-        '/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc'
+        '/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc',
+        '/System/Library/Fonts/Supplemental/ヒラギノ角ゴ ProN W6.ttc'
     ]
     for path in candidates:
-        if os.path.exists(path) and os.path.getsize(path) > 10000:
+        if os.path.exists(path):
             try:
                 return ImageFont.truetype(path, size)
             except Exception:
