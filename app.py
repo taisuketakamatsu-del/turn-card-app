@@ -231,13 +231,9 @@ div[data-testid="stImage"] img {
     margin-top: 2px !important;
 }
 
-/* 印刷用iframeを見えなくする */
+/* iframe非表示用 */
 #print-iframe {
-    position: absolute;
-    width: 0;
-    height: 0;
-    border: none;
-    visibility: hidden;
+    display: none;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -662,7 +658,7 @@ with left_col:
         )
         
     with btn_col2:
-        # ダイレクトプリント用スクリプトの埋め込み
+        # 新しいタブでPDFを表示して印刷するスクリプト
         print_html = f"""
         <style>
         .print-btn {{
@@ -682,17 +678,31 @@ with left_col:
             background-color: #1D4ED8;
         }}
         </style>
-        <button class="print-btn" onclick="printPDF()">🖨️ そのまま印刷する</button>
+        <button class="print-btn" onclick="openAndPrintPDF()">🖨️ そのまま印刷する</button>
         <script>
-        function printPDF() {{
-            const pdfData = "data:application/pdf;base64,{b64_pdf}";
-            const printWindow = window.open("");
-            printWindow.document.write(`
-                <html><head><title>Print Card</title></head>
-                <body style="margin:0;padding:0;overflow:hidden;">
-                    <iframe src="${{pdfData}}" style="width:100%;height:100%;border:none;" onload="setTimeout(function(){{window.print();}}, 500);"></iframe>
-                </body></html>
+        function openAndPrintPDF() {{
+            const pdfDataUrl = "data:application/pdf;base64,{b64_pdf}";
+            // 新しいタブでPDFを開く
+            const newWindow = window.open();
+            newWindow.document.write(`
+                <html>
+                <head>
+                    <title>カード印刷プレビュー</title>
+                    <style>
+                        body {{ margin: 0; padding: 0; background-color: #525659; display: flex; justify-content: center; align-items: center; height: 100vh; }}
+                        embed {{ width: 100%; height: 100%; }}
+                    </style>
+                </head>
+                <body>
+                    <embed src="${{pdfDataUrl}}" type="application/pdf">
+                </body>
+                </html>
             `);
+            newWindow.document.close();
+            // 自動的に印刷ダイアログを呼び出す（少し待つ）
+            setTimeout(() => {{
+                newWindow.print();
+            }}, 1000);
         }}
         </script>
         """
