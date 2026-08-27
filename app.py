@@ -122,7 +122,7 @@ div[data-testid="stExpander"] summary * {
     font-weight: 700 !important;
 }
 
-div[data-testid="stExpander"] label, .stTextInput label, div[data-testid="stSlider"] label {
+div[data-testid="stExpander"] label, .stTextInput label, div[data-testid="stSlider"] label, div[data-testid="stCheckbox"] label * {
     color: #334155 !important;
     font-weight: 700 !important;
     font-size: 0.8rem !important;
@@ -339,6 +339,7 @@ PRESETS = {
     }
 }
 
+# --- 初期化処理 ---
 if "input_textarea_key" not in st.session_state:
     st.session_state["input_textarea_key"] = PRESETS["不快スイッチ"]["text"]
 if "input_tag_key" not in st.session_state:
@@ -346,7 +347,7 @@ if "input_tag_key" not in st.session_state:
 if "input_footer_key" not in st.session_state:
     st.session_state["input_footer_key"] = PRESETS["不快スイッチ"]["footer"]
 if "input_font_size_key" not in st.session_state:
-    st.session_state["input_font_size_key"] = 52
+    st.session_state["input_font_size_key"] = 52  # 初期値を設定
 if "input_show_number_key" not in st.session_state:
     st.session_state["input_show_number_key"] = False
 
@@ -487,7 +488,7 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, font_si
     font_tag = get_japanese_font(42)
     font_text = get_japanese_font(font_size)
     font_footer = get_japanese_font(30)
-    font_number = get_japanese_font(28)  # 通し番号用のフォント
+    font_number = get_japanese_font(28)
 
     for i, text in enumerate(card_lines[:10]):
         col = i % 2
@@ -580,9 +581,9 @@ with left_col:
             with c2:
                 st.text_input("フッター表記", key="input_footer_key")
             
-            st.slider("テキストの文字サイズ", min_value=30, max_value=80, value=52, step=2, key="input_font_size_key")
+            # 修正ポイント: valueの指定を外し、session_stateの初期値を使用させる
+            st.slider("テキストの文字サイズ", min_value=30, max_value=80, step=2, key="input_font_size_key")
             
-            # 通し番号のチェックボックスを追加
             st.checkbox("通し番号（No.01, No.02...）をカード左上に表示する", key="input_show_number_key")
             
             uploaded_frame = st.file_uploader("枠画像の変更", type=["png", "jpg", "jpeg"])
