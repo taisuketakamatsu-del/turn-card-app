@@ -19,7 +19,7 @@ FONT_PATH = "NotoSansJP-Bold.ttf"
 
 st.markdown("""
 <style>
-/* ヘッダー・フッター・上部余白の完全削除 */
+/* ヘッダー・フッター・不要な余白の完全削除 */
 header[data-testid="stHeader"], 
 [data-testid="stHeader"], 
 [data-testid="stToolbar"], 
@@ -34,13 +34,12 @@ div[data-testid="stAppViewContainer"] > section,
 .main .block-container,
 [data-testid="stMainBlockContainer"],
 .block-container {
-    padding-top: 0.1rem !important;
-    margin-top: 0rem !important;
-    padding-bottom: 0.5rem !important;
+    padding-top: 0.8rem !important;
+    padding-bottom: 0.8rem !important;
 }
 
 html, body, [class*="css"] {
-    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans JP", sans-serif !important;
     color: #0F172A !important;
 }
 
@@ -49,38 +48,38 @@ html, body, [class*="css"] {
 }
 
 .main .block-container {
-    max-width: 1380px !important;
-    padding-left: 1.2rem !important;
-    padding-right: 1.2rem !important;
+    max-width: 1280px !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
     margin: 0 auto !important;
 }
 
+/* タイトル・ラベルのスタイリッシュ化 */
 .app-title {
-    font-size: 1.25rem !important;
+    font-size: 1.1rem !important;
     font-weight: 700 !important;
     color: #0F172A !important;
-    margin-top: 0 !important;
-    margin-bottom: 0.4rem !important;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.6rem !important;
 }
 
 .section-label {
-    font-size: 0.78rem !important;
-    font-weight: 700 !important;
-    color: #475569 !important;
-    margin-bottom: 0.2rem !important;
-    letter-spacing: 0.05em;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    color: #64748B !important;
+    margin-bottom: 0.3rem !important;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
 }
 
-/* タブ文字可視化 */
+/* タブのデザイン整理（サイズ縮小） */
 button[data-baseweb="tab"] *, 
 div[data-baseweb="tab-list"] button *,
 [data-testid="stTab"] * {
-    color: #475569 !important;
-    -webkit-text-fill-color: #475569 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    font-weight: 700 !important;
+    color: #64748B !important;
+    -webkit-text-fill-color: #64748B !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
 }
 
 button[data-baseweb="tab"][aria-selected="true"] *, 
@@ -88,157 +87,149 @@ div[data-baseweb="tab-list"] button[aria-selected="true"] *,
 [data-testid="stTab"][aria-selected="true"] * {
     color: #2563EB !important;
     -webkit-text-fill-color: #2563EB !important;
-    opacity: 1 !important;
-    visibility: visible !important;
     font-weight: 700 !important;
 }
 
 div[data-baseweb="tab-list"] {
     background-color: #E2E8F0 !important;
-    border-radius: 8px !important;
-    padding: 3px !important;
-    gap: 4px !important;
-    margin-bottom: 0.6rem !important;
+    border-radius: 6px !important;
+    padding: 2px !important;
+    gap: 2px !important;
+    margin-bottom: 0.8rem !important;
     width: fit-content !important;
     display: inline-flex !important;
+}
+
+div[data-baseweb="tab-list"] button {
+    padding: 4px 12px !important;
+    border-radius: 4px !important;
 }
 
 /* 詳細設定（stExpander） */
 div[data-testid="stExpander"] {
     background-color: #FFFFFF !important;
-    border: 1px solid #CBD5E1 !important;
-    border-radius: 8px !important;
-    margin-top: 0.4rem !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 6px !important;
+    margin-top: 0.5rem !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
 }
 
 div[data-testid="stExpander"] summary {
-    background-color: #FFFFFF !important;
-    border-radius: 8px !important;
-    color: #0F172A !important;
+    padding: 0.4rem 0.8rem !important;
 }
 
 div[data-testid="stExpander"] summary * {
-    color: #0F172A !important;
-    font-weight: 700 !important;
+    color: #334155 !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
 }
 
 div[data-testid="stExpander"] label, .stTextInput label, div[data-testid="stSlider"] label, div[data-testid="stCheckbox"] label * {
-    color: #334155 !important;
-    font-weight: 700 !important;
-    font-size: 0.8rem !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
 }
 
 div[data-baseweb="select"] {
     background-color: #FFFFFF !important;
-    border-radius: 8px !important;
+    border-radius: 6px !important;
     border: 1px solid #CBD5E1 !important;
 }
 
 div[data-baseweb="select"] * {
+    font-size: 0.82rem !important;
     color: #0F172A !important;
-    background-color: #FFFFFF !important;
 }
 
 .stTextArea textarea, .stTextInput input {
-    font-size: 0.88rem !important;
+    font-size: 0.82rem !important;
     line-height: 1.5 !important;
-    border-radius: 8px !important;
+    border-radius: 6px !important;
     border: 1px solid #CBD5E1 !important;
     background-color: #FFFFFF !important;
     color: #0F172A !important;
-    caret-color: #2563EB !important;
+    padding: 0.5rem !important;
 }
 
 div.stDownloadButton > button, div.stButton > button {
-    height: 42px !important;
+    height: 36px !important;
     background-color: #0F172A !important;
     color: #FFFFFF !important;
-    border-radius: 8px !important;
+    border-radius: 6px !important;
     border: none !important;
-    padding: 0 1rem !important;
-    font-size: 0.88rem !important;
-    font-weight: 700 !important;
+    padding: 0 0.8rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
     width: 100% !important;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
 }
 
 div[data-testid="stRadio"] > div {
     background-color: #E2E8F0 !important;
-    padding: 3px !important;
-    border-radius: 8px !important;
+    padding: 2px !important;
+    border-radius: 6px !important;
     display: inline-flex !important;
-    gap: 4px !important;
+    gap: 2px !important;
     margin: 0 !important;
-    width: 260px !important;
-    height: 36px !important;
+    width: 220px !important;
+    height: 32px !important;
 }
 
 div[data-testid="stRadio"] label {
     flex: 1 !important;
-    height: 30px !important;
+    height: 28px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     background: transparent !important;
-    border-radius: 6px !important;
-    cursor: pointer !important;
-}
-
-div[data-testid="stRadio"] label > div:first-child {
-    display: none !important;
+    border-radius: 4px !important;
 }
 
 div[data-testid="stRadio"] label p {
-    font-size: 0.82rem !important;
+    font-size: 0.78rem !important;
     font-weight: 600 !important;
-    color: #475569 !important;
-    margin: 0 !important;
+    color: #64748B !important;
 }
 
 div[data-testid="stRadio"] label:has(input:checked) {
     background-color: #FFFFFF !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06) !important;
 }
 
 div[data-testid="stRadio"] label:has(input:checked) p {
     color: #0F172A !important;
 }
 
-/* プレビュー画像サイズを85vhに拡大 */
+/* 右側画像の絶妙なフィッティング（上下余白の自然化） */
 div[data-testid="stImage"] img {
-    max-height: 85vh !important;
+    max-height: 76vh !important;
     width: auto !important;
     object-fit: contain !important;
-    border-radius: 10px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
     background-color: #FFFFFF !important;
 }
 
 .history-card {
     background-color: #FFFFFF !important;
-    border: 1px solid #CBD5E1 !important;
-    border-radius: 8px !important;
-    padding: 0.8rem !important;
-    margin-bottom: 0.6rem !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 6px !important;
+    padding: 0.6rem !important;
+    margin-bottom: 0.5rem !important;
 }
 .history-card-title {
-    font-weight: 700 !important;
-    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
     color: #0F172A !important;
 }
 .history-card-date {
-    font-size: 0.75rem !important;
+    font-size: 0.7rem !important;
     color: #64748B !important;
-    margin-top: 2px !important;
-}
-
-#print-iframe {
-    display: none;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# テキスト入力即時反映用JS
+# テキストリアルタイム同期JS
 components.html("""
 <script>
 (function(){
@@ -268,7 +259,7 @@ components.html("""
         });
         target.dispatchEvent(ev);
       }
-    }, 250);
+    }, 200);
   }
 
   parentDoc.addEventListener('input', function(e) {
@@ -596,55 +587,53 @@ with left_col:
             label_visibility="collapsed"
         )
 
-        st.markdown('<div class="section-label">テキスト編集（10行）</div>', unsafe_allow_html=True)
-        
-        # カーソル位置へ <br> を直接挿入するJavaScriptボタン
+        # 確実にカーソル位置（または選択範囲）へ <br> を挿入する信頼性の高いJavaScript
         components.html("""
         <style>
         .br-btn {
             width: 100%;
-            height: 38px;
-            background-color: #0F172A;
+            height: 32px;
+            background-color: #334155;
             color: #FFFFFF;
-            border-radius: 8px;
+            border-radius: 5px;
             border: none;
-            font-size: 0.82rem;
-            font-weight: 700;
+            font-size: 0.78rem;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
-            transition: all 0.2s ease;
+            margin-bottom: 4px;
+            transition: all 0.15s ease;
         }
         .br-btn:hover {
             background-color: #1E293B;
         }
         </style>
-        <button class="br-btn" onclick="insertBrAtCursor()">➕ カーソル位置に改行タグ &lt;br&gt; を挿入</button>
+        <button class="br-btn" onclick="insertBrAtCursor()">↵ カーソル位置に改行 (&lt;br&gt;) を挿入</button>
         <script>
         function insertBrAtCursor() {
             const parentDoc = window.parent.document;
             const textarea = parentDoc.querySelector('div[data-testid="stTextArea"] textarea');
             if(!textarea) return;
 
-            const startPos = textarea.selectionStart;
-            const endPos = textarea.selectionEnd;
-            const originalValue = textarea.value;
-
-            textarea.value = originalValue.substring(0, startPos) + "<br>" + originalValue.substring(endPos);
-            textarea.selectionStart = startPos + 4;
-            textarea.selectionEnd = startPos + 4;
             textarea.focus();
-
-            textarea.dispatchEvent(new Event('input', { bubbles: true }));
-            textarea.dispatchEvent(new Event('change', { bubbles: true }));
+            if (parentDoc.queryCommandSupported && parentDoc.queryCommandSupported('insertText')) {
+                parentDoc.execCommand('insertText', false, '<br>');
+            } else {
+                const startPos = textarea.selectionStart;
+                const endPos = textarea.selectionEnd;
+                const val = textarea.value;
+                textarea.value = val.substring(0, startPos) + "<br>" + val.substring(endPos);
+                textarea.selectionStart = textarea.selectionEnd = startPos + 4;
+                textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            }
         }
         </script>
-        """, height=44)
+        """, height=36)
 
-        # 高さを330pxに広げ、10行が完全に縦に収まるよう拡大
+        # 高さをコンパクトにしつつ10行が収まる絶妙な260pxに設定
         st.text_area(
             "テキスト編集", 
             key="input_textarea_key", 
-            height=330, 
+            height=260, 
             label_visibility="collapsed"
         )
 
@@ -658,11 +647,11 @@ with left_col:
             st.checkbox("自動改行（読みやすく2行に自動分割）を有効にする", key="input_auto_break_key")
             st.checkbox("通し番号（No.01, No.02...）をカード左上に表示する", key="input_show_number_key")
             
-            st.markdown("<hr style='margin:0.8rem 0;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin:0.6rem 0;'>", unsafe_allow_html=True)
             st.checkbox("カードごとに個別に文字サイズを調整する", key="input_use_custom_sizes")
             
             if st.session_state["input_use_custom_sizes"]:
-                st.markdown("<p style='font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:0.4rem;'>各枠の文字サイズ設定 (No.01〜No.10)</p>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size:0.75rem; font-weight:600; color:#475569; margin-bottom:0.3rem;'>各枠の文字サイズ設定 (No.01〜No.10)</p>", unsafe_allow_html=True)
                 size_cols1 = st.columns(2)
                 size_cols2 = st.columns(2)
                 size_cols3 = st.columns(2)
@@ -719,7 +708,7 @@ with left_col:
         memories = load_memories()
         
         with st.expander("⚙️ 記憶データのバックアップと復元", expanded=False):
-            st.markdown("<p style='font-size:0.8rem; color:#64748B;'>※サーバーの仕様でデータがリセットされる場合があります。定期的なバックアップを推奨します。</p>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.75rem; color:#64748B;'>※定期的なバックアップを推奨します。</p>", unsafe_allow_html=True)
             b1, b2 = st.columns(2)
             with b1:
                 json_string = json.dumps(memories, ensure_ascii=False, indent=2)
@@ -740,7 +729,7 @@ with left_col:
                     except Exception:
                         st.error("正しいバックアップファイルではありません。")
 
-        st.markdown('<div class="section-label" style="margin-top: 1rem;">保存された記憶一覧</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-label" style="margin-top: 0.8rem;">保存された記憶一覧</div>', unsafe_allow_html=True)
         
         if not memories:
             st.info("保存された記憶はまだありません。編集タブから保存してください。")
@@ -818,16 +807,16 @@ with left_col:
         <style>
         .print-btn {{
             width: 100%;
-            height: 42px;
+            height: 36px;
             background-color: #2563EB;
             color: #FFFFFF;
-            border-radius: 8px;
+            border-radius: 6px;
             border: none;
-            font-size: 0.88rem;
-            font-weight: 700;
+            font-size: 0.82rem;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
-            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.15);
+            transition: all 0.15s ease;
         }}
         .print-btn:hover {{
             background-color: #1D4ED8;
@@ -859,4 +848,5 @@ with left_col:
         }}
         </script>
         """
-        components.html(print_html, height=50)
+        components.html(print_html, height=40)
+        
