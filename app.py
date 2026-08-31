@@ -469,7 +469,7 @@ def get_japanese_font(size):
 
     return ImageFont.load_default()
 
-# ★左右・上下の余白を等間隔に配置計算した新座標
+# ★文字位置の調整座標
 X_COORDS = [112, 1187, 2262]
 Y_COORDS = [67, 716, 1365, 2014, 2663, 3312]
 
@@ -545,7 +545,6 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, default
         processed_text = process_card_text(text, enable_auto_break)
         draw.text((cx, cy + 20), processed_text, fill=(26, 32, 44), font=font_text, anchor='mm', align='center', spacing=25)
         
-        # フッター表記を切り取り線から55px内側に下げて配置（重なり防止）
         draw.text((box_x1 - 55, box_y1 - 55), footer_title, fill=(160, 174, 192), font=font_footer, anchor='rb')
 
         if show_number:
@@ -558,7 +557,28 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, default
             if f_img.size != (canvas_w, canvas_h):
                 f_img = f_img.resize((canvas_w, canvas_h), Image.Resampling.LANCZOS)
 
-            arr_frame = np.array(f_img)
+            # 1. 枠画像全体を文字と同じ位置にシフト（左へ46px, 上へ61px）
+            dx, dy = -46, -61
+            shifted_frame = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
+            shifted_frame.paste(f_img, (dx, dy))
+
+            # 2. 左上ロゴ部分（切り取りエリア）を抽出し、約75%に縮小して内側に配置
+            logo_box = (0, 0, 650, 220)
+            logo_crop = shifted_frame.crop(logo_box)
+            
+            # 元のロゴ位置をクリア
+            draw_sf = ImageDraw.Draw(shifted_frame)
+            draw_sf.rectangle([0, 0, 650, 220], fill=(0, 0, 0, 0))
+            
+            # 75%サイズにリサイズ
+            logo_w = int(logo_crop.width * 0.75)
+            logo_h = int(logo_crop.height * 0.75)
+            logo_resized = logo_crop.resize((logo_w, logo_h), Image.Resampling.LANCZOS)
+            
+            # 端から離した安全な位置（左端112px, 上端20px）に再配置
+            shifted_frame.paste(logo_resized, (112, 20), logo_resized)
+
+            arr_frame = np.array(shifted_frame)
             if len(arr_frame.shape) == 3 and arr_frame.shape[2] == 4:
                 rgb_part = arr_frame[:, :, :3]
                 is_white = np.all(rgb_part >= 240, axis=2)
@@ -566,7 +586,7 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, default
                 processed_frame = Image.fromarray(arr_frame)
                 composite_layer = Image.alpha_composite(text_layer, processed_frame)
             else:
-                composite_layer = Image.alpha_composite(text_layer, f_img)
+                composite_layer = Image.alpha_composite(text_layer, shifted_frame)
         except Exception:
             pass
 
@@ -686,9 +706,9 @@ with left_col:
                 ]
                 for idx in range(10):
                     with all_cols[idx]:
-                        st.slider(f"No.{idx+1:02d} サイズ", min_value=30, max_value=80, value=60, step=2, key=f"custom_font_size_{idx}")
+                        st.slider(f"No.{idx+1:02d} サイズ", min_value=30, max_value=80, value=DEFAULT_FONT_SIZE, step=2, key=f"custom_font_size_{idx}")
             else:
-                st.slider("全体の文字サイズ", min_value=30, max_value=80, value=60, step=2, key="input_font_size_key")
+                st.slider("全体の文字サイズ", min_value=30, max_value=80, value=DEFAULT_FONT_SIZE, step=2, key="input_font_size_key")
             
             uploaded_frame = st.file_uploader("枠画像の変更", type=["png", "jpg", "jpeg"])
 
@@ -869,4 +889,3 @@ with left_col:
         </script>
         """
         components.html(print_html, height=40)
-        
