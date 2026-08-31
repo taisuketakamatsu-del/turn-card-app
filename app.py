@@ -105,7 +105,7 @@ div[data-baseweb="tab-list"] button {
     border-radius: 4px !important;
 }
 
-/* 詳細設定（stExpander）の色バグを完全解消 */
+/* 詳細設定（stExpander） */
 div[data-testid="stExpander"] {
     background-color: #FFFFFF !important;
     border: 1px solid #CBD5E1 !important;
@@ -346,7 +346,6 @@ PRESETS = {
     }
 }
 
-# 初期文字サイズを [60] に設定
 DEFAULT_FONT_SIZE = 60
 
 if "input_textarea_key" not in st.session_state:
@@ -440,7 +439,6 @@ def auto_analyze_break_japanese(text):
     return text[:mid] + "\n" + text[mid:]
 
 def process_card_text(text, enable_auto_break):
-    # <改行>、(改行)、<br>、<BR> のどれが入っていても実際の改行（\n）に変換
     text = text.replace("<改行>", "\n").replace("(改行)", "\n").replace("<br>", "\n").replace("<BR>", "\n").strip()
     if enable_auto_break and "\n" not in text:
         return auto_analyze_break_japanese(text)
@@ -471,19 +469,21 @@ def get_japanese_font(size):
 
     return ImageFont.load_default()
 
+# ★左右・上下の余白を等間隔に配置計算した新座標
+X_COORDS = [112, 1187, 2262]
+Y_COORDS = [67, 716, 1365, 2014, 2663, 3312]
+
 def create_fallback_frame():
     canvas_w, canvas_h = 2373, 3379
     img = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     dash_color = (200, 210, 220, 255)
-    x_coords = [158, 1233, 2307]
-    y_coords = [128, 777, 1426, 2075, 2725, 3376]
-    for x in x_coords:
-        for y in range(y_coords[0], y_coords[-1], 20):
-            draw.line([(x, y), (x, min(y + 10, y_coords[-1]))], fill=dash_color, width=3)
-    for y in y_coords:
-        for x in range(x_coords[0], x_coords[-1], 20):
-            draw.line([(x, y), (min(x + 10, x_coords[-1]), y)], fill=dash_color, width=3)
+    for x in X_COORDS:
+        for y in range(Y_COORDS[0], Y_COORDS[-1], 20):
+            draw.line([(x, y), (x, min(y + 10, Y_COORDS[-1]))], fill=dash_color, width=3)
+    for y in Y_COORDS:
+        for x in range(X_COORDS[0], X_COORDS[-1], 20):
+            draw.line([(x, y), (min(x + 10, X_COORDS[-1]), y)], fill=dash_color, width=3)
     return img
 
 def get_frame_image(uploaded_file):
@@ -513,8 +513,6 @@ def get_frame_image(uploaded_file):
 
 def generate_card_layers(card_lines, tag_title, footer_title, frame_img, default_font_size, font_sizes_list, show_number, enable_auto_break):
     canvas_w, canvas_h = 2373, 3379
-    x_coords = [158, 1233, 2307]
-    y_coords = [128, 777, 1426, 2075, 2725, 3376]
 
     text_layer = Image.new('RGBA', (canvas_w, canvas_h), (255, 255, 255, 255))
     draw = ImageDraw.Draw(text_layer)
@@ -527,10 +525,10 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, default
         col = i % 2
         row = i // 2
         
-        box_x0 = x_coords[col]
-        box_x1 = x_coords[col + 1]
-        box_y0 = y_coords[row]
-        box_y1 = y_coords[row + 1]
+        box_x0 = X_COORDS[col]
+        box_x1 = X_COORDS[col + 1]
+        box_y0 = Y_COORDS[row]
+        box_y1 = Y_COORDS[row + 1]
         
         cx = (box_x0 + box_x1) / 2.0
         cy = (box_y0 + box_y1) / 2.0
@@ -547,10 +545,11 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, default
         processed_text = process_card_text(text, enable_auto_break)
         draw.text((cx, cy + 20), processed_text, fill=(26, 32, 44), font=font_text, anchor='mm', align='center', spacing=25)
         
-        draw.text((box_x1 - 40, box_y1 - 40), footer_title, fill=(160, 174, 192), font=font_footer, anchor='rb')
+        # フッター表記を切り取り線から55px内側に下げて配置（重なり防止）
+        draw.text((box_x1 - 55, box_y1 - 55), footer_title, fill=(160, 174, 192), font=font_footer, anchor='rb')
 
         if show_number:
-            draw.text((box_x0 + 40, box_y0 + 40), f"No.{i+1:02d}", fill=(160, 174, 192), font=font_number, anchor='lt')
+            draw.text((box_x0 + 45, box_y0 + 45), f"No.{i+1:02d}", fill=(160, 174, 192), font=font_number, anchor='lt')
 
     composite_layer = text_layer.copy()
     if frame_img is not None:
@@ -606,7 +605,6 @@ with left_col:
             label_visibility="collapsed"
         )
 
-        # 直感的な <改行> タグをカーソル位置に挿入するボタン
         components.html("""
         <style>
         .br-btn {
@@ -871,3 +869,4 @@ with left_col:
         </script>
         """
         components.html(print_html, height=40)
+        
