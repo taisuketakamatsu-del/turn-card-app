@@ -469,7 +469,7 @@ def get_japanese_font(size):
 
     return ImageFont.load_default()
 
-# ★文字位置の調整座標（等間隔配置）
+# ★文字位置の調整座標
 X_COORDS = [112, 1187, 2262]
 Y_COORDS = [67, 716, 1365, 2014, 2663, 3312]
 
@@ -557,26 +557,27 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, default
             if f_img.size != (canvas_w, canvas_h):
                 f_img = f_img.resize((canvas_w, canvas_h), Image.Resampling.LANCZOS)
 
-            # 1. 枠画像全体をシフトして文字位置に合わせる
+            # 1. 枠線画像全体をシフト
             dx, dy = -46, -61
             shifted_frame = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
             shifted_frame.paste(f_img, (dx, dy))
 
-            # 2. ピンポイントでロゴだけを切り抜き（点線枠に干渉しないギリギリの領域）
-            # 元画像のロゴ領域 (x: 140~520, y: 15~115)
-            logo_crop = f_img.crop((140, 15, 520, 115))
-            
-            # シフトされた枠画像の上部余白部分（y: 0~66）を一度クリア
+            # 2. 上部余白領域に被っている歪んだロゴ領域を消去
             draw_sf = ImageDraw.Draw(shifted_frame)
             draw_sf.rectangle([0, 0, 600, 66], fill=(0, 0, 0, 0))
+
+            # 3. 元の画像からロゴ領域（0テレHR）をピンポイント抽出
+            raw_logo_area = f_img.crop((0, 0, 650, 128))
+            bbox = raw_logo_area.getbbox()
             
-            # ロゴの大きさを適正サイズ（80%）に調整
-            lw = int(logo_crop.width * 0.80)
-            lh = int(logo_crop.height * 0.80)
-            logo_resized = logo_crop.resize((lw, lh), Image.Resampling.LANCZOS)
-            
-            # 点線枠（y=67）の真上、左端（x=112）に合わせて綺麗に配置
-            shifted_frame.paste(logo_resized, (112, 10), logo_resized)
+            if bbox:
+                exact_logo = raw_logo_area.crop(bbox)
+                target_h = 44  # 上部余白(67px)の中に綺麗に収まる高さ
+                target_w = int(exact_logo.width * (target_h / float(exact_logo.height)))
+                logo_resized = exact_logo.resize((target_w, target_h), Image.Resampling.LANCZOS)
+                
+                # 点線枠の上（x: 112, y: 12）へジャスト配置
+                shifted_frame.paste(logo_resized, (112, 12), logo_resized)
 
             arr_frame = np.array(shifted_frame)
             if len(arr_frame.shape) == 3 and arr_frame.shape[2] == 4:
@@ -889,3 +890,4 @@ with left_col:
         </script>
         """
         components.html(print_html, height=40)
+        
