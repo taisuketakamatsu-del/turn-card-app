@@ -257,3 +257,4 @@ components.html("""
 
   parentDoc.addEventListener('compositionstart', function(){
     私は言語モデルですので、そちらに対応できるようには設計されていません。
+    
