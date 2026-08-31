@@ -576,7 +576,7 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, default
                 target_w = int(exact_logo.width * (target_h / float(exact_logo.height)))
                 logo_resized = exact_logo.resize((target_w, target_h), Image.Resampling.LANCZOS)
                 
-                # ★左へ寄せて点線枠（x=112）の左端ラインにピッタリ合わせる (x: 75, y: 12)
+                # 左へ寄せて点線枠（x=112）の左端ラインにピッタリ合わせる (x: 75, y: 12)
                 shifted_frame.paste(logo_resized, (75, 12), logo_resized)
 
             arr_frame = np.array(shifted_frame)
@@ -830,7 +830,8 @@ with right_col:
 
 with left_col:
     st.markdown("<br>", unsafe_allow_html=True)
-    pdf_data = convert_to_pdf_bytes(display_img)
+    # PDF保存・印刷時は自動的に「枠線なし（テキストのみ＝text_only_img）」を生成
+    pdf_data = convert_to_pdf_bytes(text_only_img)
     b64_pdf = base64.b64encode(pdf_data).decode('utf-8')
     
     btn_col1, btn_col2 = st.columns([1, 1])
@@ -890,4 +891,3 @@ with left_col:
         </script>
         """
         components.html(print_html, height=40)
-                            
