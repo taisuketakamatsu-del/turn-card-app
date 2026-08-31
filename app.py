@@ -562,22 +562,22 @@ def generate_card_layers(card_lines, tag_title, footer_title, frame_img, default
             shifted_frame = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
             shifted_frame.paste(f_img, (dx, dy))
 
-            # 2. 上部余白領域に被っている歪んだロゴ領域を消去
+            # 2. 上部余白領域の旧ロゴエリアをクリア
             draw_sf = ImageDraw.Draw(shifted_frame)
             draw_sf.rectangle([0, 0, 600, 66], fill=(0, 0, 0, 0))
 
-            # 3. 元の画像からロゴ領域（0テレHR）をピンポイント抽出
+            # 3. 元画像からロゴ領域（0テレHR）をピンポイント抽出
             raw_logo_area = f_img.crop((0, 0, 650, 128))
             bbox = raw_logo_area.getbbox()
             
             if bbox:
                 exact_logo = raw_logo_area.crop(bbox)
-                target_h = 44  # 上部余白(67px)の中に綺麗に収まる高さ
+                target_h = 44
                 target_w = int(exact_logo.width * (target_h / float(exact_logo.height)))
                 logo_resized = exact_logo.resize((target_w, target_h), Image.Resampling.LANCZOS)
                 
-                # 点線枠の上（x: 112, y: 12）へジャスト配置
-                shifted_frame.paste(logo_resized, (112, 12), logo_resized)
+                # ★左へ寄せて点線枠（x=112）の左端ラインにピッタリ合わせる (x: 75, y: 12)
+                shifted_frame.paste(logo_resized, (75, 12), logo_resized)
 
             arr_frame = np.array(shifted_frame)
             if len(arr_frame.shape) == 3 and arr_frame.shape[2] == 4:
@@ -890,4 +890,4 @@ with left_col:
         </script>
         """
         components.html(print_html, height=40)
-        
+                            
