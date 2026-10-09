@@ -17,6 +17,8 @@ st.set_page_config(page_title="YouTube → MP3", layout="centered")
 
 FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
 MAX_TRACKS = 200
+# Streamlit Cloud 上ではPCのフォルダに保存できない
+IS_CLOUD = os.path.exists("/mount/src")
 
 
 def base_opts(cookie_path):
@@ -102,6 +104,11 @@ with col2:
 with col3:
     embed_thumb = st.checkbox("サムネをジャケットに", value=True)
 
+save_dir = ""
+if not IS_CLOUD:
+    save_dir = st.text_input("保存先フォルダ（空欄ならZIPダウンロードのみ）", value=os.path.join(os.path.expanduser("~"), "Music", "YouTube"))
+    skip_existing = st.checkbox("保存先に同じ曲があればスキップ", value=True)
+
 with st.expander("詳細設定（ボット確認エラーが出る場合）"):
     st.caption("「Sign in to confirm you're not a bot」と出る場合、ブラウザから書き出した cookies.txt をアップロードすると通ることがあります。ファイルは処理後すぐ削除されます。")
     cookie_file = st.file_uploader("cookies.txt", type=["txt"])
@@ -139,11 +146,22 @@ if st.button("MP3に変換", type="primary", use_container_width=True):
 
     # ダウンロード＆変換
     files = []
+    saved = skipped = 0
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+        existing = {os.path.splitext(n)[0] for n in os.listdir(save_dir)}
     progress = st.progress(0.0)
     for i, track in enumerate(all_tracks):
         progress.progress(i / max(len(all_tracks), 1), text=f"({i + 1}/{len(all_tracks)}) {track['title']}")
         try:
-            files.append(download_mp3(track["url"], out_dir, bitrate, embed_thumb, cookie_path))
+            if save_dir and skip_existing and track["title"] in existing:
+                skipped += 1
+                continue
+            path = download_mp3(track["url"], out_dir, bitrate, embed_thumb, cookie_path)
+            files.append(path)
+            if save_dir:
+                shutil.copy2(path, os.path.join(save_dir, os.path.basename(path)))
+                saved += 1
         except Exception as e:
             failed.append((track["title"], str(e)))
     progress.progress(1.0, text="完了")
@@ -159,13 +177,17 @@ if st.button("MP3に変換", type="primary", use_container_width=True):
             for path in files:
                 zf.write(path, unique_name(os.path.basename(path), used))
 
-    st.session_state["result"] = {"dir": out_dir, "zip": zip_path, "files": files, "failed": failed}
+    st.session_state["result"] = {"dir": out_dir, "zip": zip_path, "files": files, "failed": failed, "saved": saved, "skipped": skipped, "save_dir": save_dir}
 
 # ---------------- 結果 ----------------
 result = st.session_state.get("result")
 if result:
+    if result.get("skipped"):
+        st.info(f"⏭️ 保存済みの{result['skipped']}曲をスキップしました")
     if result["files"]:
         st.success(f"{len(result['files'])}曲をMP3に変換しました")
+        if result["saved"]:
+            st.info(f"📁 {result['saved']}曲を保存しました：{result['save_dir']}")
         zip_path = result["zip"]
         st.download_button(
             "📦 まとめてダウンロード (ZIP)",
