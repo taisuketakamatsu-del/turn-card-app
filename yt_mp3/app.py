@@ -1,4 +1,6 @@
 import os
+import re
+import time
 import glob
 import shutil
 import zipfile
@@ -27,6 +29,9 @@ def base_opts(cookie_path):
         "quiet": True,
         "no_warnings": True,
         "noprogress": True,
+        "retries": 5,
+        "fragment_retries": 5,
+        "extractor_retries": 3,
         "ffmpeg_location": FFMPEG_PATH,
         "windowsfilenames": True,
     }
@@ -76,6 +81,26 @@ def download_audio(url, out_dir, fmt, bitrate, embed_thumb, cookie_path):
     if not outs:
         raise RuntimeError(f"{fmt.upper()}ファイルが生成されませんでした")
     return outs[0]
+
+
+def download_with_retry(url, out_dir, fmt, bitrate, embed_thumb, cookie_path, attempts=3):
+    """一時的なエラー（403など）に備えて、間をあけて再試行する"""
+    for n in range(attempts):
+        try:
+            return download_audio(url, out_dir, fmt, bitrate, embed_thumb, cookie_path)
+        except Exception:
+            if n == attempts - 1:
+                raise
+            time.sleep(5 * (n + 1))
+
+
+def explain_error(err):
+    err = re.sub(r"\x1b\[[0-9;]*m|\[[0-9;]*m", "", str(err))
+    if "403" in err:
+        err += "\n→ YouTubeに拒否されました。時間をおいて再試行するか、詳細設定から cookies.txt を使うと通ることがあります。"
+    elif "Sign in to confirm" in err:
+        err += "\n→ ボット確認です。詳細設定から cookies.txt をアップロードしてください。"
+    return err
 
 
 def unique_name(name, used):
@@ -166,7 +191,7 @@ if clicked or st.session_state.pop("auto_run", False):
                 st.write(f"📃 {title}：{len(tracks)}曲")
                 all_tracks.extend(tracks)
             except Exception as e:
-                failed.append((url, str(e)))
+                failed.append((url, explain_error(e)))
                 st.write(f"❌ {url}")
         status.update(label=f"{len(all_tracks)}曲見つかりました", state="complete")
 
@@ -179,13 +204,13 @@ if clicked or st.session_state.pop("auto_run", False):
     for i, track in enumerate(all_tracks):
         progress.progress(i / max(len(all_tracks), 1), text=f"({i + 1}/{len(all_tracks)}) {track['title']}")
         try:
-            path = download_audio(track["url"], out_dir, fmt, bitrate, embed_thumb, cookie_path)
+            path = download_with_retry(track["url"], out_dir, fmt, bitrate, embed_thumb, cookie_path)
             files.append(path)
             if save_dir:
                 shutil.copy2(path, os.path.join(save_dir, os.path.basename(path)))
                 saved += 1
         except Exception as e:
-            failed.append((track["title"], str(e)))
+            failed.append((track["title"], explain_error(e)))
     progress.progress(1.0, text="完了")
 
     if cookie_path and os.path.exists(cookie_path):
