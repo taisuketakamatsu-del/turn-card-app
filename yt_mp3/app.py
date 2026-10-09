@@ -1,6 +1,8 @@
 import os
 import re
 import time
+import subprocess
+import sys
 import glob
 import shutil
 import zipfile
@@ -101,6 +103,17 @@ def explain_error(err):
     elif "Sign in to confirm" in err:
         err += "\n→ ボット確認です。詳細設定から cookies.txt をアップロードしてください。"
     return err
+
+
+def notify(message):
+    """Macの通知センターに完了を知らせる（Mac以外では何もしない）"""
+    if sys.platform != "darwin":
+        return
+    script = f'display notification "{message}" with title "YouTube → MP3" sound name "Glass"'
+    try:
+        subprocess.run(["osascript", "-e", script], timeout=10)
+    except Exception:
+        pass
 
 
 def unique_name(name, used):
@@ -212,6 +225,10 @@ if clicked or st.session_state.pop("auto_run", False):
         except Exception as e:
             failed.append((track["title"], explain_error(e)))
     progress.progress(1.0, text="完了")
+    msg = f"{len(files)}曲のダウンロード準備ができました"
+    if failed:
+        msg += f"（失敗 {len(failed)}件）"
+    notify(msg)
 
     if cookie_path and os.path.exists(cookie_path):
         os.remove(cookie_path)
